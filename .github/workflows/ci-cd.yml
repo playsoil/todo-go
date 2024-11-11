@@ -1,0 +1,46 @@
+name: Run CI CD
+on: push
+
+# here I decided to group them to make sure only on actions run at a time.
+concurrency:
+  group: ci-cd-group-${{ github.ref}}
+  cancel-in-progress: false
+jobs:
+  # unit_test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - run: |
+  #         go test -v ./...
+
+  build_dev_image:
+    uses: "playsoil/todo-go/.github/workflows/build.yml@master"
+    # needs: unit_test
+    secrets: inherit
+    with:
+      tag: "dev"
+
+  deploy-to-dev:
+    uses: "playsoil/todo-go/.github/workflows/deploy.yml@master"
+    needs: build_dev_image
+    secrets: inherit
+    with:
+      app_port: 8081
+      tag: "dev"
+
+    #   e2e test
+
+  build_production_image:
+    uses: "playsoil/todo-go/.github/workflows/build.yml@master"
+    needs: deploy-to-dev
+    secrets: inherit
+    with:
+      tag: "latest"
+
+  deploy-to-production:
+    uses: "playsoil/todo-go/.github/workflows/deploy.yml@master"
+    needs: build_production_image
+    secrets: inherit
+    with:
+      app_port: 8080
+      tag: "latest"

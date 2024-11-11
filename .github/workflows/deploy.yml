@@ -1,0 +1,45 @@
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Docker hub tag to deploy"
+        required: true
+        type: string
+      app_port:
+        description: "App port"
+        required: true
+        type: number
+jobs:
+  to-vps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "checkout code"
+        uses: actions/checkout@v4
+      # Step to copy docker-compose-prod.yml to the VPS server
+      - name: Copy docker-compose-prod.yml to VPS
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          source: "./docker-compose-prod.yml" # Path to the file in your repo
+          target: "./app"
+          overwrite:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          script: |
+            export DB_NAME=${{ secrets.DB_NAME }}
+            export DB_USER=${{ secrets.DB_USER }}
+            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            export COMPOSE_PROJECT_NAME=todo-${{ inputs.tag }}
+            export IMAGE_TAG=${{ inputs.tag }}
+            export APP_PORT=${{ inputs.app_port }}
+            docker compose -f ./app/docker-compose-prod.yml stop 
+            docker compose -f ./app/docker-compose-prod.yml rm
+            docker compose -f ./app/docker-compose-prod.yml pull
+            docker compose -f ./app/docker-compose-prod.yml up -d
