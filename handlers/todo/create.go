@@ -23,5 +23,5 @@ func CreateHandler(c *fiber.Ctx) error {
 		return responses.Error(c, 500, "internal server error, "+err.Error())
 	}
 
-	return c.JSON(fiber.Map{"data": createdTask})
+	return responses.Success(c, createdTask)
 }

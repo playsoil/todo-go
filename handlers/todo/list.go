@@ -13,7 +13,5 @@ func ListHandler(c *fiber.Ctx) error {
 		return responses.Error(c, 500, "internal server error, "+err.Error())
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": tasks,
-	})
+	return responses.Success(c, tasks)
 }
