@@ -5,10 +5,12 @@ import (
 	"github.com/playsoil/todo-go/models"
 )
 
-func GetTaskList() []models.Task {
+func GetTaskList() ([]models.Task, error) {
 	var tasks []models.Task
-	database.DB.DB.Find(&tasks)
-	return tasks
+	if result := database.DB.DB.Find(&tasks); result.Error != nil {
+		return nil, result.Error
+	}
+	return tasks, nil
 }
 
 func CreateTask(task *models.Task) (*models.Task, error) {
