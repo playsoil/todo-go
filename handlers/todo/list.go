@@ -2,14 +2,13 @@ package todo
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/playsoil/todo-go/database"
-	"github.com/playsoil/todo-go/models"
+	"github.com/playsoil/todo-go/database/repositories"
 )
 
 func ListHandler(c *fiber.Ctx) error {
-	tasks := []models.Task{}
-	database.DB.DB.Find(&tasks)
-	return c.Status(200).JSON(fiber.Map{
+	tasks := repositories.GetTaskList()
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"data": tasks,
 	})
 }

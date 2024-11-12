@@ -2,7 +2,7 @@ package todo
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/playsoil/todo-go/database"
+	"github.com/playsoil/todo-go/database/repositories"
 	"github.com/playsoil/todo-go/models"
 )
 
@@ -10,13 +10,23 @@ func CreateHandler(c *fiber.Ctx) error {
 	task := new(models.Task)
 
 	if err := c.BodyParser(task); err != nil {
-		return c.Status(400).JSON(fiber.Map{"message": "body must be a valid json"})
+		return ErrorResponse(c, 400, "request body must be a valid json")
 	}
 
 	if len(task.Title) == 0 {
-		return c.Status(422).JSON(fiber.Map{"title": "title field is required"})
+		return ErrorResponse(c, 422, "title field is required")
 	}
-	database.DB.DB.Create(&task)
 
-	return c.JSON(fiber.Map{"data": task})
+	createdTask, err := repositories.CreateTask(task)
+	if err != nil {
+		return ErrorResponse(c, 500, "internal server error, "+err.Error())
+	}
+
+	return c.JSON(fiber.Map{"data": createdTask})
+}
+
+func ErrorResponse(c *fiber.Ctx, code int, message string) error {
+	return c.
+		Status(code).
+		JSON(fiber.Map{"message": "could not create task", "error": message})
 }
